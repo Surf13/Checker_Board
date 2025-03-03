@@ -1,9 +1,10 @@
-# Chess_Board
+# Checker_Board
 
 Utilized the SFML Library.
 
-To run Code run:
+To Run Code
 
-$ g++ -o main main.cpp -lsfml-graphics -lsfml-window -lsfml-system
-$ ./main
-
+ *Go to src Folder
+ 
+ $make
+ $./main
