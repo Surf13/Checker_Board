@@ -1,13 +1,13 @@
 #include "Game.h"
 #include <iostream>
+#include <cmath>
         Game::Game(){ //const std::string &configFile 
             init();
         }
 
         void Game::init(){ //const std::string &configFile
-                d_window.create(sf::VideoMode(800, 600), "Checker Board");
+                d_window.create(sf::VideoMode(1000, 1000), "Checker Board");
                 d_window.setFramerateLimit(59);
-
 }
         
 
@@ -16,7 +16,34 @@
         void Game::UserInput(){}
         void Game::Capture(){}
     
-        void Game::Spawn_Board(){}//int width, int height
+        void Game::Spawn_Board(){
+            d_window.clear();
+            int window_x = 1000; 
+            int window_y = 1000;
+
+            //Reduce for Margin Space
+            window_x-=window_x/9.0f;
+            window_y-=window_x/9.0f;
+            int margin =std::min(window_x/9.0f, window_y/9.0f)/2;
+
+            float block_size = std::min(window_x/8.0f, window_y/8.0f);
+
+            for(int i=0; i< 8; i++){
+                for(int j=0;j<8;j++){
+
+                    sf::RectangleShape rect( { block_size,block_size });
+                    rect.setPosition({margin + j * block_size, margin + i * block_size});
+
+                    if((i+j) % 2==0){
+                        rect.setFillColor(sf::Color(139, 69, 19)); //Brown
+                    } else {
+                        rect.setFillColor(sf::Color(255, 255, 255)); //White
+                    }
+                    d_window.draw(rect);
+                }
+            }
+            
+        }
         
         void Game::Spawn_Piece(){}
     
@@ -35,7 +62,7 @@
         
                 // Clear the window with a black color
                 d_window.clear(sf::Color::Black);
-        
+                Spawn_Board(); //Dosplay Board
                 // Display everything that was drawn
                 d_window.display();
             }
