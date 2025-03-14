@@ -9,17 +9,30 @@
  COMPONENTS_H
 class Entity{
     friend class EntityManager;
-
-    bool active     = true;
+public:
+    bool alive     = true;
     size_t m_id     =0;
     std::string tag = "default";
 
-    Entity();
-
-    Entity(const size_t input_id,const std::string input_tag);
-    
 public:
 
+    Entity(const size_t input_id,const std::string input_tag);
+        
+
+public:
+    std::shared_ptr<CompTransform> compTransform;
+    std::shared_ptr<CompChecker>   compChecker;
+    std::shared_ptr<CompRect>      compRect;
+    //Collision
+    //Input
+    //Score
+    //Death?
+
+private:
+    bool isAlive() const;
+    const std::string & getTag() const;
+    size_t id() const;
+    void destroy();
 };
 
 

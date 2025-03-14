@@ -7,29 +7,46 @@
 class CompTransform
 {
 //Where Entity Is, How fast its going
+public:
+    Vec2 pos = {0,0};
+public:
+    CompTransform(const Vec2 &p): pos(p){}
 };
 
 class CompChecker
 {
+    public:
+
     sf::CircleShape circle;
 
+    CompChecker(float radius,int point_x,int point_y, const sf::Color & fill, const sf::Color & outline, float thickness);
+//Maybe not Set Origin as Position
+};
+
+class CompRect{
+    public:
+    sf::RectangleShape rect;
+
+    CompRect(float width, float height, const sf::Color & fill);
 
 };
 
-class CompInput
-{
-public:
-    bool up =false;
-    bool down= false;
-    bool right = false;
-    bool left = false;
+class CompCollision{
+    public:
+        float radious = 0;
+        CompCollision(int r): radious(r){}
 };
 
+class CompScore{
+    int score = 0;
+    CompScore(int s): score(s){}
+};
 
-class Turn
-{
+class Turn{
 
     int turn = 1;
+    
+public:
     //Player 1 or Player 2
     Turn();
 
@@ -37,7 +54,7 @@ class Turn
 
     void switchTurn();
 
-    int getTurn();
+    int getTurn() const;
 };
 
 

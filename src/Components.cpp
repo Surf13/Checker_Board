@@ -1,38 +1,27 @@
 #include "Vec2.h"
 #include <SFML/Graphics.hpp>
-
-class CompTransform
-{
-//Where Entity Is, How fast its going
-};
-
-class CompChecker
-{
-    sf::CircleShape circle;
+#include "Components.h"
 
 
-};
-
-class CompInput
-{
-public:
-    bool up =false;
-    bool down= false;
-    bool right = false;
-    bool left = false;
-};
 
 
-class Turn
-{
+    CompChecker::CompChecker(float radius,int point_x, int point_y, const sf::Color & fill, const sf::Color & outline, float thickness): circle(radius){
+        circle.setFillColor(fill);
+        circle.setOutlineColor(outline);
+        circle.setOutlineThickness(thickness);
+        circle.setOrigin(point_x,point_y);
+    }
 
-    int turn = 1;
-    //Player 1 or Player 2
-    Turn();
+    CompRect::CompRect(float width, float height, const sf::Color & fill){
+        rect.setSize({width,height});
+        rect.setFillColor(fill);
+    }
 
-    Turn(int t): turn(t) {}
+    Turn::Turn(): turn(1) {}
 
-    void switchTurn(){
+    Turn::Turn(int t): turn(t) {}
+
+    void Turn::switchTurn(){
         if(turn==1){
             turn = 2;
         } else {
@@ -40,8 +29,8 @@ class Turn
         }
     }
 
-    int getTurn(){
+    int Turn::getTurn() const{
         return turn;
     }
-};
+
 

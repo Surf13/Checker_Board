@@ -9,22 +9,18 @@ class Game{
 public:
     sf::RenderWindow    d_window;
     EntityManager       d_Entities;
-    sf::Font            d_Font;
-    sf::Text            d_Test;
+    EntityManager       d_BoardTiles;
     int                 turn=1;
-    bool                d_paused=false;
     bool                d_running=true;
 
-    Game(); //const std::string &configFile
+    Game(); 
 
-    void init(); //const std::string &configFile
-    void pauseGame();
-    void systemMovement();
+    void init(); //Initalize Board and Spawn Pieces
+    bool systemMovement(float x_Old, float y_Old, float x_New, float y_New, std::string piece_tag); //Verify Move is allowed
     void UserInput();
-    void Capture();
-
+    void Capture(); //Do Actual Capture action
+    void Render();
     void Spawn_Board();
-
     void Spawn_Piece();
 
 //public:
