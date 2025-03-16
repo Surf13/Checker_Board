@@ -38,3 +38,21 @@
     }
 
    
+    std::shared_ptr<Entity> EntityManager::getEntity(const size_t id){
+
+        for(auto& e : d_entities){
+            if(e->m_id ==id ){
+                return e;
+            }
+        }
+        return nullptr;
+    }
+
+    void EntityManager::RemoveEntity(std::shared_ptr<Entity> entity){
+        auto iter = std::remove(d_entities.begin(),d_entities.end(),entity);
+        if(iter != d_entities.end()){
+            d_entities.erase(iter, d_entities.end());
+            totalEntity--;
+            
+        }
+    }

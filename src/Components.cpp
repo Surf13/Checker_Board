@@ -29,8 +29,17 @@
         }
     }
 
-    int Turn::getTurn() const{
+    int Turn::getTurn(){
         return turn;
     }
+
+    std::string Turn::getTurnName(){
+        if(turn == 1){
+            return "Black";
+        } else{
+            return "white";
+        }
+    }
+
 
 

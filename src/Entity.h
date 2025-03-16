@@ -23,16 +23,16 @@ public:
     std::shared_ptr<CompTransform> compTransform;
     std::shared_ptr<CompChecker>   compChecker;
     std::shared_ptr<CompRect>      compRect;
-    //Collision
-    //Input
-    //Score
-    //Death?
 
-private:
+
     bool isAlive() const;
     const std::string & getTag() const;
     size_t id() const;
+
     void destroy();
+
+    bool operator ==(const std::shared_ptr<Entity>& other);
+
 };
 
 

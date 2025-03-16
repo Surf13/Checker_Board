@@ -54,7 +54,9 @@ public:
 
     void switchTurn();
 
-    int getTurn() const;
+    int getTurn();
+
+    std::string getTurnName();
 };
 
 

@@ -1,35 +1,109 @@
 #include "Game.h"
 #include <iostream>
 #include <cmath>
-        Game::Game(){ //const std::string &configFile 
+        Game::Game(){ 
             init();
         }
 
-        void Game::init(){ //const std::string &configFile
+        void Game::init(){ 
                 d_window.create(sf::VideoMode(1000, 1000), "Checker Board");
                 d_window.setFramerateLimit(59);
                 
 }       
-                
-        bool Game::systemMovement(float x_Old, float y_Old, float x_New, float y_New, std::string piece_tag){
-            (void) x_Old;
-            (void) y_Old;
-            (void) x_New;
-            (void) y_New;
-            std::cout << "Piece Type:   " << piece_tag << std::endl << std::flush;
-            std::cout << "Old Position: " << (int)x_Old << "," << (int)y_Old << std::endl;
-            std::cout << "New Position: " << x_New << "," << y_New << std::endl;
+    
+        void Game::systemMovement(float x_Old, float y_Old, float x_New, float y_New, size_t piece_tag){
+            (void)x_Old;
+            (void)y_Old;
+            (void)x_New;
+            (void)y_New;
+
+            bool valid = false; 
+            auto cur_entity = d_Entities.getEntity(piece_tag); //Checker
+
+            int window_x = 1000; 
+            int window_y = 1000;
+            float block_size = floor(std::min(window_x/9.0f, window_y/9.0f));
+
+            //Check Piece Vs Allowed Moves
+            if("white_Checker" == cur_entity->tag && turn.getTurn()==2){
+                if(
+                    (((x_Old + block_size) == x_New) && ((y_Old+block_size)==y_New)) ||
+                    (((x_Old - block_size) == x_New) && ((y_Old+block_size)==y_New))
+                ){
+                    valid = true;
+                }
+            } else if("black_Checker" == cur_entity->tag && turn.getTurn()==1){
+                if(
+                    ((x_Old + block_size == x_New) && (y_Old-block_size==y_New)) ||
+                    ((x_Old - block_size == x_New) && (y_Old-block_size==y_New))
+                ){
+                    valid = true;
+                }
+
+            } else if((("black_king" == cur_entity->tag)&&turn.getTurn()==1) || (("white_king" == cur_entity->tag)&&turn.getTurn()==2)){
+                if(
+                    ((x_Old + block_size == x_New) && (y_Old+block_size==y_New)) ||
+                    ((x_Old - block_size == x_New) && (y_Old+block_size==y_New)) ||
+                    ((x_Old + block_size == x_New) && (y_Old-block_size==y_New)) ||
+                    ((x_Old - block_size == x_New) && (y_Old-block_size==y_New))
+                ){
+                    valid = true;
+                }
+            }
+
+            //Check Tile being Moved to incase Ally piece is alreadt there
+            for(auto &e: d_Entities.getEntities()){ 
+                if( (x_New == e->compTransform->pos.x) && (y_New == e->compTransform->pos.y)){
+                    if(cur_entity->compChecker->circle.getFillColor() == e->compChecker->circle.getFillColor()){
+                        valid = false;
+                        std::cout << "Another Piece Already there" << std::endl;
+                    } else if( ((x_New+(x_New-x_Old)) == e->compTransform->pos.x) && ((y_New+(y_New-y_Old)) == e->compTransform->pos.y)){
+                        valid = false;
+                        std::cout << "Two Piece Defense Ocurring" << std::endl;
+                    } else if(valid){ // Check Jump
+                        bool exists = false;
+                        for(auto& tile :d_BoardTiles.getEntities()){
+                            if(
+                                ((x_New+(x_New-x_Old)) == tile->compTransform->pos.x) && 
+                                ((y_New+(y_New-y_Old)  == tile->compTransform->pos.y)) 
+                            ){
+                                exists=true;
+                            }
+                        }
+                        if(!exists){
+                            valid = false;
+                            std::cout << "Jump not Allowed" << std::endl;
+                        }
+                    }
+                }
+            }
 
 
+            
+            if (valid)
+            {
+                cur_entity->compTransform->pos.x = x_New;
+                cur_entity->compTransform->pos.y = y_New;
 
+                bool Attacked = Capture();
+                if(!Attacked){
+                    turn.switchTurn();
+                    std::cout << "Position: " << cur_entity->compTransform->pos.x << "," << cur_entity->compTransform->pos.y << std::endl;
 
-            return false; //IF Sucessful Return False
+                } else {
+                    cur_entity->compTransform->pos.x += (x_New-x_Old);
+                    cur_entity->compTransform->pos.y += (y_New-y_Old);
+                    std::cout << "Position: " << cur_entity->compTransform->pos.x << "," << cur_entity->compTransform->pos.y << std::endl;
+                    std::cout << "Block Size: " << block_size << std::endl;
+                }
+            } 
+           std::cout <<"Current Turn: " << turn.getTurnName() << std::endl;
         }
         
-        bool firstClick = false;
+        bool firstClick = true;
         float previousClick_x = -1;
         float previousClick_y = -1;
-        std::string EntityTag;
+        size_t EntityId;
 
         void Game::UserInput(){
             sf::Event event;
@@ -42,8 +116,7 @@
 
                 if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)){
                     sf::Vector2i localPosition = sf::Mouse::getPosition(d_window); // window is a sf::Window
-                    if(!firstClick){ 
-                        //std::cout << "Position: (" << localPosition.x<< "," << localPosition.y << ")" << std::endl;
+                    if(firstClick){ 
                         for(auto& tile: d_BoardTiles.getEntities()){   
                             int window_x = 1000; 
                             int window_y = 1000;
@@ -52,22 +125,21 @@
                                 (tile->compTransform->pos.x-localPosition.x < 0) && (tile->compTransform->pos.x-localPosition.x > -block_size) &&
                                 (tile->compTransform->pos.y-localPosition.y < 0) && (tile->compTransform->pos.y-localPosition.y > -block_size) 
                             ){
-                                //std::cout << "Tile Clicked: " << tile->tag << std::endl;
 
-                                for(auto &e: d_Entities.getEntities()){ //Check if Checker on Tiele
+                                for(auto &e: d_Entities.getEntities()){ //Check if Checker on Tile
                                     if( (tile->compTransform->pos.x == e->compTransform->pos.x) && (tile->compTransform->pos.y == e->compTransform->pos.y)){
                                         previousClick_x = tile->compTransform->pos.x;
                                         previousClick_y = tile->compTransform->pos.y;
-                                        EntityTag = e->tag;
-                                        firstClick= true;
+                                        EntityId = e->m_id;
+                                        firstClick= false;
+                                        std::cout << "Piece Selected: " << e->tag << std::endl;
+
                                     }
                                 }
                             }
                         }
                     } else {
-                            // Handle second click or subsequent clicks if needed
-                        //std::cout << "Subsequent click at position: (" << localPosition.x << ", " << localPosition.y << ")\n";
-                            
+                            // Handle second click or subsequent clicks if needed                            
                         for(auto& tile: d_BoardTiles.getEntities()){   
                             int window_x = 1000; 
                             int window_y = 1000;
@@ -76,19 +148,50 @@
                                 (tile->compTransform->pos.x-localPosition.x < 0) && (tile->compTransform->pos.x-localPosition.x > -block_size) &&
                                 (tile->compTransform->pos.y-localPosition.y < 0) && (tile->compTransform->pos.y-localPosition.y > -block_size) 
                             ){
-                                //std::cout << "Tile Clicked: " << tile->tag << std::endl;
-                                std::cout << previousClick_x << std::endl;
-                                firstClick = systemMovement(previousClick_x, previousClick_y, localPosition.x, localPosition.y, EntityTag);
+                                std::cout << "Piece Moved" << std::endl;
+                                systemMovement(previousClick_x, previousClick_y, tile->compTransform->pos.x, tile->compTransform->pos.y, EntityId);
+                                firstClick = true;
                             }
-                            // Optionally, reset the flag if you want to handle another first click
-                        //firstClick = false;
                         }
                     }
                 }
             }
         }
         
-        void Game::Capture(){}
+
+        bool Game::Capture(){
+            std::vector<std::shared_ptr<Entity>> RemoveEnt;
+            bool removed =false;
+            for(auto& entity1: d_Entities.getEntities()){  
+                for(auto& entity2:d_Entities.getEntities()){
+                    if (entity1.get()->compTransform && entity2.get()->compTransform) {
+                        if(
+                            (entity1.get()->compTransform->pos.x ==  entity2.get()->compTransform->pos.x) &&
+                            (entity1.get()->compTransform->pos.y ==  entity2.get()->compTransform->pos.y) &&
+                            (entity1.get()->m_id != entity2->m_id)
+                        ){
+                            std::cout << "Attempting to Capture Piece" << std::endl;
+                            removed = true;
+                            if((entity1->tag == "white_Checker" || entity1->tag == "white_king") && turn.getTurn()==2){
+                                RemoveEnt.push_back(entity2);
+                            } else {
+                                RemoveEnt.push_back(entity1);
+
+                            }
+                            break;
+                        }
+                    }
+                }
+                if(removed){
+                    break;
+                }   
+            }
+
+            for (auto& entity : RemoveEnt) {
+                d_Entities.RemoveEntity(entity);
+            }
+            return removed;
+        }
     
         void Game::Spawn_Board(){
             //d_window.clear();
@@ -109,7 +212,6 @@
 
                     tile->compTransform = std::make_shared<CompTransform>(Vec2{margin + j * block_size, margin + i * block_size});
 
-                    //std::cout << "Block Position: ("<< margin + j * block_size << "," << margin + i * block_size << ")"<<std::endl;
                     if((i+j) % 2==0){
                         tile->compRect =  std::make_shared<CompRect>(block_size,block_size,sf::Color(139, 69, 19)); //Brown
                     } else {
@@ -189,12 +291,14 @@
                     float e_X = e->compTransform->pos.x + block_size/2;
                     float e_Y = e->compTransform->pos.y + block_size/2;  
                     e->compChecker->circle.setPosition(e_X,e_Y);
-                    //std::cout << "Id:" << e->m_id << std::endl;
-                    //std::cout << "Position: (" << e->compTransform->pos.x<< "," << e->compTransform->pos.y << ")" << std::endl;
+
                     //Draw Entity
                     d_window.draw(e->compChecker->circle);
                 }
 
+                //ScoreBoard:
+                
+                //Display Turn and Score
             d_window.display();
         }
 
@@ -214,58 +318,4 @@
             }
         }
     
-    
-/*
-  while (d_window.isOpen())
-            {
-                // Process events (like closing the window)
-                sf::Event event;
-                while (d_window.pollEvent(event))
-                {
-                    if (event.type == sf::Event::Closed)
-                    d_window.close(); // Close the window when the close event is triggered
-                }
-        
-                // Clear the window with a black color
-                //d_window.clear(sf::Color::Black);
-                //Spawn_Board(); //Dosplay Board
-                Render();
-                // Display everything that was drawn
-                d_window.display();
-            }
-*/
-
-/*
-    int main()
-{
-    // Create a window with a title "SFML Window" and a size of 800x600 pixels
-    sf::RenderWindow window(sf::VideoMode(800, 600), "SFML Window");
-
-    sf::CircleShape shape(50.f);
-    shape.setFillColor(sf::Color(150, 50, 250));
-    
-    // set a 10-pixel wide orange outline
-    shape.setOutlineThickness(10.f);
-    shape.setOutlineColor(sf::Color(250, 150, 100));
-    // Main game loop (window stays open until user closes it)
-    while (window.isOpen())
-    {
-        // Process events (like closing the window)
-        sf::Event event;
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close(); // Close the window when the close event is triggered
-        }
-
-        // Clear the window with a black color
-        window.clear(sf::Color::Black);
-
-        // Display everything that was drawn
-        window.draw(shape);
-        window.display();
-    }
-
-    return 0;
-}
-    */
+   

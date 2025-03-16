@@ -22,7 +22,9 @@ public:
     
     EntityVec& getEntities(const std::string tag);
 
+    std::shared_ptr<Entity> getEntity(const size_t id);
 
+    void RemoveEntity(std::shared_ptr<Entity> entity);
 };
 
 

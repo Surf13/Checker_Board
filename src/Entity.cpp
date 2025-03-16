@@ -11,34 +11,18 @@ const std::string& Entity::getTag() const{
 
 size_t Entity::id() const{
     return m_id;
-};
+}
 
 void Entity::destroy(){
     alive = false;
+    
+    //Clears Pointers using reset function
+    compChecker.reset();
+    compTransform.reset();
+    compRect.reset();
 }
 
-/*
-class Checker{
-
-public:
-    char color = NULL;
-    char type  = NULL;
-
-checker(char col, char type)
-    : color(col), type(type){}
-
-char getColor() const{
-    return color;
+bool Entity::operator ==(const std::shared_ptr<Entity>& other){
+    return m_id == other->m_id; // or compare other unique attributes like `tag`
 }
 
-char getType() const{
-    return type;
-}
-
-char Promote(char newType){
-    type = newType;
-}
-
-
-};
-*/
