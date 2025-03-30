@@ -13,6 +13,6 @@ To Run Code:
 4. Note: Executable file generates in Project Directory not the src folder
 
 3. Board Should Generate, use Mouse clicks to select pieces to move
-    -Left Mouse Click for Normal Moves
-    -Middle Mouse Click for Additional Jumps
+    - Left Mouse Click for Normal Moves
+    - Middle Mouse Click for Additional Jumps
 
