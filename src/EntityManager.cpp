@@ -11,10 +11,8 @@
 
         std::shared_ptr<Entity> newEntity = std::make_shared<Entity>(totalEntity++,tag);
 
-        std::cout << "Adding Entity: " << tag << std::endl;
-
         d_entities.push_back(newEntity); //Add to Vector
-        d_entitiesMap[tag].push_back(newEntity); //Add to Map
+        d_entitiesMap[tag].push_back(newEntity); //Add to Map(Never Used)
 
         return newEntity;
     }

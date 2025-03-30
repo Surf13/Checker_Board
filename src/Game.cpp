@@ -54,25 +54,30 @@
             //Check Tile being Moved to incase Ally piece is alreadt there
             for(auto &e: d_Entities.getEntities()){ 
                 if( (x_New == e->compTransform->pos.x) && (y_New == e->compTransform->pos.y)){
-                    if(cur_entity->compChecker->circle.getFillColor() == e->compChecker->circle.getFillColor()){
+                    if(cur_entity->compChecker->circle.getFillColor() == e->compChecker->circle.getFillColor()){ //Check if Block is Ally
                         valid = false;
-                        std::cout << "Another Piece Already there" << std::endl;
-                    } else if( ((x_New+(x_New-x_Old)) == e->compTransform->pos.x) && ((y_New+(y_New-y_Old)) == e->compTransform->pos.y)){
+                    } else if( ((x_New+(x_New-x_Old)) == e->compTransform->pos.x) && ((y_New+(y_New-y_Old)) == e->compTransform->pos.y)){ //Check if Next block is open
                         valid = false;
-                        std::cout << "Two Piece Defense Ocurring" << std::endl;
                     } else if(valid){ // Check Jump
                         bool exists = false;
-                        for(auto& tile :d_BoardTiles.getEntities()){
+                        for(auto& tile :d_BoardTiles.getEntities()){ //Check for Tile to land on
                             if(
                                 ((x_New+(x_New-x_Old)) == tile->compTransform->pos.x) && 
-                                ((y_New+(y_New-y_Old)  == tile->compTransform->pos.y)) 
+                                ((y_New+(y_New-y_Old)  == tile->compTransform->pos.y))
                             ){
-                                exists=true;
+                                exists = true;
+                                for(auto&e2:d_Entities.getEntities()){ //Checks For entity on tile that jump land on
+                                    if(
+                                        (e2->compTransform->pos.x == tile->compTransform->pos.x) &&
+                                        (e2->compTransform->pos.y == tile->compTransform->pos.y)
+                                    ){
+                                        exists = false;
+                                    }
+                                }
                             }
                         }
                         if(!exists){
                             valid = false;
-                            std::cout << "Jump not Allowed" << std::endl;
                         }
                     }
                 }
@@ -88,23 +93,210 @@
                 bool Attacked = Capture();
                 if(!Attacked){
                     turn.switchTurn();
-                    std::cout << "Position: " << cur_entity->compTransform->pos.x << "," << cur_entity->compTransform->pos.y << std::endl;
-
-                } else {
+                    currentTurnOutput();
+                } else { 
                     cur_entity->compTransform->pos.x += (x_New-x_Old);
                     cur_entity->compTransform->pos.y += (y_New-y_Old);
-                    std::cout << "Position: " << cur_entity->compTransform->pos.x << "," << cur_entity->compTransform->pos.y << std::endl;
-                    std::cout << "Block Size: " << block_size << std::endl;
+                    Promote();
+                    Render();
+
+                    bool AdditionalMove = CheckActionPossible(cur_entity->compTransform->pos.x, cur_entity->compTransform->pos.y, piece_tag);
+
+                    if(AdditionalMove){
+                        bool loop = true;
+                        std::cout << "Select Next Location In Jump using Middle Click" << std::endl;
+                        while(loop){
+                            if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Middle)){
+                                sf::Vector2i localPosition = sf::Mouse::getPosition(d_window); // window is a sf::Window
+                                for(auto& tile: d_BoardTiles.getEntities()){   
+                                    int window_x = 1000; 
+                                    int window_y = 1000;
+                                    float block_size = std::min(window_x/9.0f, window_y/9.0f);
+                                    if(
+                                        (tile->compTransform->pos.x-localPosition.x < 0) && (tile->compTransform->pos.x-localPosition.x > -block_size) &&
+                                        (tile->compTransform->pos.y-localPosition.y < 0) && (tile->compTransform->pos.y-localPosition.y > -block_size) 
+                                    ){
+                                        systemMovement(cur_entity->compTransform->pos.x, cur_entity->compTransform->pos.x, tile->compTransform->pos.x, tile->compTransform->pos.y, piece_tag);
+                                        loop = false;
+                                    }
+                                }
+                            }
+                        }
+
+                    } else {
+                        turn.switchTurn();
+                        currentTurnOutput();
+                    }
+
                 }
-            } 
-           std::cout <<"Current Turn: " << turn.getTurnName() << std::endl;
+                Promote();
+            } else {
+                currentTurnOutput();
+            }
+        }
+
+        void Game::currentTurnOutput(){
+            std::cout<< "---------------------------------------------------------------" << std::endl;
+            std::cout <<"Current Turn: " << turn.getTurnName() << std::endl; 
+            
         }
         
+    
+        bool Game::CheckActionPossible(float x_Old, float y_Old, size_t piece_tag){
+            auto cur_entity = d_Entities.getEntity(piece_tag); //Checker
+            bool valid = false; 
+            bool bottom_Right = false;
+            bool bottom_Left = false;
+            bool top_Right = false;
+            bool top_Left = false;
+
+            int window_x = 1000; 
+            int window_y = 1000;
+            float block_size = floor(std::min(window_x/9.0f, window_y/9.0f));
+            //White 
+            if("white_Checker" == cur_entity->tag && turn.getTurn()==2){
+                bottom_Right = true;
+                bottom_Left = true;                    
+            
+            } else if("black_Checker" == cur_entity->tag && turn.getTurn()==1){
+                top_Left = true;
+                top_Right = true;
+            } else if((("black_king" == cur_entity->tag)&&turn.getTurn()==1) || (("white_king" == cur_entity->tag)&&turn.getTurn()==2)){
+                bottom_Right = true;
+                bottom_Left = true; 
+                top_Left = true;
+                top_Right = true;
+            }
+            
+            //Bottom Right
+            if(bottom_Right){
+                for(auto &e: d_Entities.getEntities()){ //Checking Right Tile
+                    if(e->compTransform->pos.x == x_Old+block_size && e->compTransform->pos.y == y_Old+block_size){
+                        bool exists = false;
+
+                            for(auto& tile :d_BoardTiles.getEntities()){ //Check for Tile to land on
+                                if(
+                                    ((x_Old+block_size+block_size) == tile->compTransform->pos.x) && 
+                                    ((y_Old+block_size+block_size  == tile->compTransform->pos.y))
+                                ){
+                                    exists = true;
+                                    for(auto&e2:d_Entities.getEntities()){ //Checks For entity on tile that jump land on
+                                        if(
+                                            (e2->compTransform->pos.x == tile->compTransform->pos.x) &&
+                                            (e2->compTransform->pos.y == tile->compTransform->pos.y)
+                                        ){
+                                            exists = false;
+                                        }
+                                    }
+                                }
+                            }
+                            if(exists){
+                                valid = true;
+                            }
+                    }
+                    
+                }
+            }
+
+            if(bottom_Left){
+                for(auto &e: d_Entities.getEntities()){ //Checking Right Tile
+                    if(e->compTransform->pos.x == x_Old-block_size && e->compTransform->pos.y == y_Old+block_size){
+                        bool exists = false;
+                            for(auto& tile :d_BoardTiles.getEntities()){ //Check for Tile to land on
+                                if(
+                                    ((x_Old-block_size-block_size) == tile->compTransform->pos.x) && 
+                                    ((y_Old+block_size+block_size  == tile->compTransform->pos.y))
+                                ){
+                                    exists = true;
+                                    for(auto&e2:d_Entities.getEntities()){ //Checks For entity on tile that jump land on
+                                        if(
+                                            (e2->compTransform->pos.x == tile->compTransform->pos.x) &&
+                                            (e2->compTransform->pos.y == tile->compTransform->pos.y)
+                                        ){
+                                            exists = false;
+                                        }
+                                    }
+                                }
+                            }
+                            if(exists){
+                                valid = true;
+                            }
+                    }
+                    
+                }
+            }
+
+            //Bottom Right
+            if(top_Right){
+                for(auto &e: d_Entities.getEntities()){ //Checking Right Tile
+                    if(e->compTransform->pos.x == x_Old+block_size && e->compTransform->pos.y == y_Old-block_size){
+                        bool exists = false;
+
+                            for(auto& tile :d_BoardTiles.getEntities()){ //Check for Tile to land on
+                                if(
+                                    ((x_Old+block_size+block_size) == tile->compTransform->pos.x) && 
+                                    ((y_Old-block_size-block_size  == tile->compTransform->pos.y))
+                                ){
+                                    exists = true;
+                                    for(auto&e2:d_Entities.getEntities()){ //Checks For entity on tile that jump land on
+                                        if(
+                                            (e2->compTransform->pos.x == tile->compTransform->pos.x) &&
+                                            (e2->compTransform->pos.y == tile->compTransform->pos.y)
+                                        ){
+                                            exists = false;
+                                        }
+                                    }
+                                }
+                            }
+                            if(exists){
+                                valid = true;
+                            }
+                    }
+                    
+                }
+            }
+
+            if(top_Left){
+                for(auto &e: d_Entities.getEntities()){ //Checking Left Tile
+                    if(e->compTransform->pos.x == x_Old-block_size && e->compTransform->pos.y == y_Old-block_size){
+                        bool exists = false;
+                            for(auto& tile :d_BoardTiles.getEntities()){ //Check for Tile to land on
+                                if(
+                                    ((x_Old-block_size-block_size) == tile->compTransform->pos.x) && 
+                                    ((y_Old-block_size-block_size  == tile->compTransform->pos.y))
+                                ){
+                                    exists = true;
+                                    for(auto&e2:d_Entities.getEntities()){ //Checks For entity on tile that jump land on
+                                        if(
+                                            (e2->compTransform->pos.x == tile->compTransform->pos.x) &&
+                                            (e2->compTransform->pos.y == tile->compTransform->pos.y)
+                                        ){
+                                            exists = false;
+                                        }
+                                    }
+                                }
+                            }
+                            if(exists){
+                                valid = true;
+                            }
+                    }
+                    
+                }
+            }
+            //-----------
+            //Check Tile being Moved to incase Ally piece is alreadt there
+            
+            //std::cout << valid << std::endl;
+            return valid; //Cannot Move Again
+        }
+
+
         bool firstClick = true;
         float previousClick_x = -1;
         float previousClick_y = -1;
         size_t EntityId;
 
+    
         void Game::UserInput(){
             sf::Event event;
             
@@ -148,7 +340,7 @@
                                 (tile->compTransform->pos.x-localPosition.x < 0) && (tile->compTransform->pos.x-localPosition.x > -block_size) &&
                                 (tile->compTransform->pos.y-localPosition.y < 0) && (tile->compTransform->pos.y-localPosition.y > -block_size) 
                             ){
-                                std::cout << "Piece Moved" << std::endl;
+                                //std::cout << "Piece Moved" << std::endl;
                                 systemMovement(previousClick_x, previousClick_y, tile->compTransform->pos.x, tile->compTransform->pos.y, EntityId);
                                 firstClick = true;
                             }
@@ -170,7 +362,6 @@
                             (entity1.get()->compTransform->pos.y ==  entity2.get()->compTransform->pos.y) &&
                             (entity1.get()->m_id != entity2->m_id)
                         ){
-                            std::cout << "Attempting to Capture Piece" << std::endl;
                             removed = true;
                             if((entity1->tag == "white_Checker" || entity1->tag == "white_king") && turn.getTurn()==2){
                                 RemoveEnt.push_back(entity2);
@@ -302,19 +493,58 @@
             d_window.display();
         }
 
+        void Game::Promote(){
+            int window_x = 1000; 
+            int window_y = 1000;
+            window_x-=window_x/9.0f;
+            window_y-=window_x/9.0f;
+            int margin =std::min(window_x/9.0f, window_y/9.0f)/2;
+            float block_size = floor(std::min(window_x/9.0f, window_y/9.0f));
+
+            for(auto&e: d_Entities.getEntities()){
+                if((e->compTransform->pos.y >= (margin+7*(block_size))) && (e->getTag() == "white_Checker")){
+                        e->tag = "white_king";
+
+                }
+                if((e->compTransform->pos.y <= (margin)) && (e->getTag()=="black_Checker")){
+                    e->tag = "black_king";
+                }
+            }
+        }
+
+        void Game::Winner(){
+            int white_count = 0;
+            int black_count = 0;
+            for(auto&e:d_Entities.getEntities()){
+                if(e->getTag()=="white_Checker" || e->getTag()=="white_king"){
+                    white_count++;
+                } else {
+                    black_count++;
+                }
+            }
+            if(black_count == 0){
+                std::cout << "White Has Won! "<<std::endl;
+                d_running=false;
+            }
+            if(white_count == 0){
+                std::cout << "Black Has Won!" <<std::endl;
+                d_running=false;
+            }
+        }
+
         void Game::run(){
             Spawn_Board();
             Spawn_Piece(); //Create Pieces on Initialization
             
             Render(); //Load Initial Board with Pieces
-
+            
+            std::cout << "Game Loaded: " << std::endl;
+            std::cout << "Black Begins" << std::endl;
+            
             while(d_running){
                 UserInput();
-                //Capture();
                 Render();
-
-                
-                
+                Winner();
             }
         }
     

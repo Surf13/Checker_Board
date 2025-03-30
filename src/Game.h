@@ -22,7 +22,10 @@ public:
     void Render();
     void Spawn_Board();
     void Spawn_Piece();
-
+    void Promote();
+    void Winner();
+    void currentTurnOutput();
+    bool CheckActionPossible(float x_Old, float y_Old, size_t piece_tag);
 //public:
 
     void run();

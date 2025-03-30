@@ -22,7 +22,4 @@ void Entity::destroy(){
     compRect.reset();
 }
 
-bool Entity::operator ==(const std::shared_ptr<Entity>& other){
-    return m_id == other->m_id; // or compare other unique attributes like `tag`
-}
 
