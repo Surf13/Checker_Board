@@ -8,6 +8,7 @@ To Run Code:
 2. Run:
  
  $make
+ 
  $./main
 
 4. Note: Executable file generates in Project Directory not the src folder
